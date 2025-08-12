@@ -42,14 +42,21 @@
 
         // --- DANE ---
         const tournaments = [
-            { id: 4, name: 'US Open', type: 'Grand Slam', color: 'bg-gradient-to-br from-yellow-400 to-amber-500', textColor: 'text-white', date: '25.08' },
             { id: 1, name: 'Australian Open', type: 'Grand Slam', color: 'bg-gradient-to-br from-yellow-400 to-amber-500', textColor: 'text-white', date: '12.01' },
+            { id: 10, name: 'Dubai', type: 'WTA/ATP 500', color: 'bg-teal-500', textColor: 'text-white', date: '16.02' },
             { id: 5, name: 'Indian Wells', type: 'ATP 1000', color: 'bg-sky-500', textColor: 'text-white', date: '05.03' },
             { id: 6, name: 'Miami Open', type: 'ATP 1000', color: 'bg-cyan-500', textColor: 'text-white', date: '18.03' },
             { id: 7, name: 'Monte-Carlo', type: 'ATP 1000', color: 'bg-red-500', textColor: 'text-white', date: '06.04' },
             { id: 8, name: 'Madrid Open', type: 'ATP 1000', color: 'bg-orange-500', textColor: 'text-white', date: '22.04' },
             { id: 2, name: 'Roland Garros', type: 'Grand Slam', color: 'bg-gradient-to-br from-yellow-400 to-amber-500', textColor: 'text-white', date: '25.05' },
             { id: 3, name: 'Wimbledon', type: 'Grand Slam', color: 'bg-gradient-to-br from-yellow-400 to-amber-500', textColor: 'text-white', date: '29.06' },
+            { id: 11, name: 'Canadian Open', type: 'WTA/ATP 1000', color: 'bg-red-600', textColor: 'text-white', date: '04.08' },
+            { id: 9, name: 'Cincinnati', type: 'WTA/ATP 1000', color: 'bg-purple-500', textColor: 'text-white', date: '11.08' },
+            { id: 4, name: 'US Open', type: 'Grand Slam', color: 'bg-gradient-to-br from-yellow-400 to-amber-500', textColor: 'text-white', date: '25.08' },
+            { id: 12, name: 'Shanghai', type: 'ATP 1000', color: 'bg-blue-700', textColor: 'text-white', date: '02.10' },
+            { id: 13, name: 'Paris', type: 'ATP 1000', color: 'bg-indigo-600', textColor: 'text-white', date: '28.10' },
+            { id: 15, name: 'WTA Finals', type: 'Finals', color: 'bg-violet-700', textColor: 'text-white', date: '02.11' },
+            { id: 14, name: 'ATP Finals', type: 'Finals', color: 'bg-red-800', textColor: 'text-white', date: '09.11' },
         ];
 
         // --- CUSTOM HOOKS ---
@@ -218,7 +225,7 @@
             const [favorites, setFavorites] = useLocalStorage('favoritePlayers', []);
             const [notificationSettings, setNotificationSettings] = useLocalStorage('notificationSettings', {});
 
-            const apiKey = '691b731dd294a6ed9cdff144813cc88b';
+            const apiKey = 'M6kb7mfgOmk841o3ttWGMSaSx9YeeYuX5A1CJlVd';
             const apiHost = 'v1.tennis.api-sports.io';
             const corsProxy = 'https://thingproxy.freeboard.io/fetch/';
 
