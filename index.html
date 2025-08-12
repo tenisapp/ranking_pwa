@@ -150,7 +150,7 @@
             };
 
             const handleSettingChange = (playerId, newSetting) => {
-                setNotificationSettings(prev => ({ ...prev, [playerId]: { ...prev[playerId], ...newSetting } }));
+                setNotificationSettings(prev => ({ ...prev, [playerId]: { ...(prev[playerId] || {}), ...newSetting } }));
             };
 
             return (
@@ -220,18 +220,28 @@
 
             const apiKey = '28b139fb57f5e96d011cff766639064edeffac3f9086eec3ec57e1dec5137bf9';
             const apiHost = 'v1.tennis.api-sports.io';
+            const corsProxy = 'https://thingproxy.freeboard.io/fetch/';
+
+            const toggleFavorite = (playerId) => {
+                setFavorites(prev => 
+                    prev.includes(playerId)
+                        ? prev.filter(id => id !== playerId)
+                        : [...prev, playerId]
+                );
+            };
 
             const fetchRankings = useCallback(async () => {
                 setLoadingPlayers(true);
                 setPlayerError(null);
                 try {
-                    const fetchPage = (type, page) => fetch(`https://${apiHost}/rankings/${type}?page=${page}`, { headers: { 'x-rapidapi-host': apiHost, 'x-rapidapi-key': apiKey } }).then(res => res.json());
-                    const promises = ['wta', 'atp'].flatMap(type => [1, 2, 3, 4, 5].map(page => fetchPage(type, page)));
+                    const fetchPage = (type, page) => fetch(`${corsProxy}https://${apiHost}/rankings/${type}?page=${page}`, { headers: { 'x-rapidapi-host': apiHost, 'x-rapidapi-key': apiKey } }).then(res => res.json());
+                    const promises = ['wta', 'atp'].flatMap(type => [1, 2].map(page => fetchPage(type, page)));
                     const results = await Promise.all(promises);
-                    const combinedPlayers = results.flatMap(result => result.response || []);
+                    const combinedPlayers = results.flatMap(result => (Array.isArray(result.response) ? result.response : []));
                     const uniquePlayers = combinedPlayers.filter(p => p.player.country === 'Poland').sort((a, b) => a.rank - b.rank).filter((p, i, self) => i === self.findIndex(o => o.player.id === p.player.id));
                     setAllPlayers(uniquePlayers);
                 } catch (err) {
+                    console.error("Błąd API graczy:", err);
                     setPlayerError("Nie udało się pobrać rankingu.");
                 } finally {
                     setLoadingPlayers(false);
@@ -243,7 +253,7 @@
                 setLoadingMatches(true);
                 setMatchError(null);
                 try {
-                    const response = await fetch(`https://${apiHost}/matches/live`, { headers: { 'x-rapidapi-host': apiHost, 'x-rapidapi-key': apiKey } });
+                    const response = await fetch(`${corsProxy}https://${apiHost}/matches/live`, { headers: { 'x-rapidapi-host': apiHost, 'x-rapidapi-key': apiKey } });
                     const data = await response.json();
                     if (data.errors && Object.keys(data.errors).length > 0) throw new Error(JSON.stringify(data.errors));
                     const relevantMatches = data.response.filter(match => {
@@ -252,6 +262,7 @@
                     });
                     setLiveMatches(relevantMatches);
                 } catch (err) {
+                    console.error("Błąd API meczów:", err);
                     setMatchError("Nie udało się pobrać meczów na żywo.");
                 } finally {
                     setLoadingMatches(false);
@@ -295,12 +306,12 @@
                             {activeTab === 'all' && (
                                 loadingPlayers ? <LoadingIndicator text="Pobieranie rankingu..." /> :
                                 playerError ? <EmptyState icon="fa-cloud-exclamation" text={playerError} /> :
-                                filteredPlayers.length > 0 ? filteredPlayers.map(p => <PlayerCard key={p.player.id} player={p} isFavorite={favorites.includes(p.player.id)} onToggleFavorite={setFavorites} />) :
+                                filteredPlayers.length > 0 ? filteredPlayers.map(p => <PlayerCard key={p.player.id} player={p} isFavorite={favorites.includes(p.player.id)} onToggleFavorite={toggleFavorite} />) :
                                 <EmptyState icon="fa-user-slash" text="Nie znaleziono graczy." />
                             )}
                             {activeTab === 'favorites' && (
                                 loadingPlayers ? <LoadingIndicator text="Ładowanie ulubionych..." /> :
-                                favoritePlayers.length > 0 ? favoritePlayers.map(p => <PlayerCard key={p.player.id} player={p} isFavorite={true} onToggleFavorite={setFavorites} />) :
+                                favoritePlayers.length > 0 ? favoritePlayers.map(p => <PlayerCard key={p.player.id} player={p} isFavorite={true} onToggleFavorite={toggleFavorite} />) :
                                 <EmptyState icon="fa-star" text="Nie masz jeszcze ulubionych graczy." />
                             )}
                             {activeTab === 'live' && (
@@ -357,9 +368,6 @@
                 );
             });
 
-            // Ten fragment obsługuje przychodzące powiadomienia push.
-            // W prawdziwej aplikacji, serwer wysyłałby sygnał push,
-            // a ten kod by go przechwytywał i wyświetlał powiadomienie na urządzeniu.
             self.addEventListener('push', function(event) {
                 const data = event.data ? event.data.json() : { title: 'Błąd', body: 'Brak danych powiadomienia' };
                 const title = data.title;
