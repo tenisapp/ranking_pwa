@@ -58,6 +58,16 @@
             { id: 15, name: 'WTA Finals', type: 'Finals', color: 'bg-violet-700', textColor: 'text-white', date: '02.11' },
             { id: 14, name: 'ATP Finals', type: 'Finals', color: 'bg-red-800', textColor: 'text-white', date: '09.11' },
         ];
+        
+        const countryNameToCode = {
+            'Poland': 'pl', 'USA': 'us', 'Spain': 'es', 'Serbia': 'rs', 'Italy': 'it',
+            'Germany': 'de', 'France': 'fr', 'Australia': 'au', 'Great Britain': 'gb',
+            'Canada': 'ca', 'Russia': 'ru', 'Greece': 'gr', 'Norway': 'no',
+            'Switzerland': 'ch', 'Argentina': 'ar', 'Japan': 'jp', 'China': 'cn',
+            'Czech Republic': 'cz', 'Belarus': 'by', 'Kazakhstan': 'kz', 'Denmark': 'dk',
+            'Croatia': 'hr', 'Netherlands': 'nl', 'Belgium': 'be', 'Chile': 'cl',
+            'Brazil': 'br', 'Ukraine': 'ua', 'Romania': 'ro', 'Bulgaria': 'bg'
+        };
 
         // --- CUSTOM HOOKS ---
         const useLocalStorage = (key, initialValue) => {
@@ -95,8 +105,9 @@
 
         const PlayerCard = ({ player, isFavorite, onToggleFavorite }) => {
             const id = player.player.id;
-            const { name, photo } = player.player;
+            const { name, photo, country } = player.player;
             const { rank, points } = player;
+            const countryCode = countryNameToCode[country] || 'xx'; // 'xx' jako fallback
             
             return (
                 <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg overflow-hidden">
@@ -106,7 +117,7 @@
                             <div className="flex-1">
                                 <div className="flex justify-between items-center">
                                     <p className="text-sm font-bold text-blue-500 dark:text-blue-400">RANKING: {rank}</p>
-                                    <img src={`https://flagcdn.com/w40/pl.png`} alt="Flaga Polski" className="w-7 rounded-sm" />
+                                    {countryCode !== 'xx' && <img src={`https://flagcdn.com/w40/${countryCode}.png`} alt={`Flaga ${country}`} className="w-7 rounded-sm" />}
                                 </div>
                                 <h3 className="mt-1 text-xl font-bold text-slate-800 dark:text-slate-100">{name}</h3>
                             </div>
@@ -227,7 +238,7 @@
 
             const apiKey = 'M6kb7mfgOmk841o3ttWGMSaSx9YeeYuX5A1CJlVd';
             const apiHost = 'v1.tennis.api-sports.io';
-            const corsProxy = 'https://thingproxy.freeboard.io/fetch/';
+            const corsProxy = 'https://cors.bridged.cc/';
 
             const toggleFavorite = (playerId) => {
                 setFavorites(prev => 
@@ -242,10 +253,16 @@
                 setPlayerError(null);
                 try {
                     const fetchPage = (type, page) => fetch(`${corsProxy}https://${apiHost}/rankings/${type}?page=${page}`, { headers: { 'x-rapidapi-host': apiHost, 'x-rapidapi-key': apiKey } }).then(res => res.json());
-                    const promises = ['wta', 'atp'].flatMap(type => [1, 2].map(page => fetchPage(type, page)));
+                    // Pobieranie 5 stron z każdego rankingu (5*50=250 graczy z ATP, 250 z WTA)
+                    const promises = ['wta', 'atp'].flatMap(type => [1, 2, 3, 4, 5].map(page => fetchPage(type, page)));
                     const results = await Promise.all(promises);
                     const combinedPlayers = results.flatMap(result => (Array.isArray(result.response) ? result.response : []));
-                    const uniquePlayers = combinedPlayers.filter(p => p.player.country === 'Poland').sort((a, b) => a.rank - b.rank).filter((p, i, self) => i === self.findIndex(o => o.player.id === p.player.id));
+                    
+                    // Usuwanie duplikatów, jeśli gracz jest w obu rankingach (np. debel i singiel)
+                    const uniquePlayers = combinedPlayers
+                        .sort((a, b) => a.rank - b.rank)
+                        .filter((player, index, self) => index === self.findIndex(p => p.player.id === player.player.id));
+                        
                     setAllPlayers(uniquePlayers);
                 } catch (err) {
                     console.error("Błąd API graczy:", err);
