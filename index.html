@@ -95,11 +95,9 @@
 
         // --- KOMPONENTY ---
         const TournamentPill = ({ tournament }) => (
-            <div className={`flex-shrink-0 px-4 py-2 rounded-full shadow-md cursor-pointer transition-transform transform hover:scale-105 ${tournament.color}`}>
-                <div className="flex items-center space-x-2">
-                    <span className={`font-semibold text-sm ${tournament.textColor}`}>{tournament.name}</span>
-                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${tournament.textColor} bg-white/20`}>{tournament.date}</span>
-                </div>
+            <div className={`flex-shrink-0 w-32 h-32 p-3 flex flex-col justify-between items-center text-center rounded-2xl shadow-lg cursor-pointer transition-transform transform hover:scale-105 ${tournament.color}`}>
+                <span className={`font-bold text-base leading-tight ${tournament.textColor}`}>{tournament.name}</span>
+                <span className={`text-sm font-bold px-2.5 py-1 rounded-full ${tournament.textColor} bg-white/25`}>{tournament.date}</span>
             </div>
         );
 
@@ -238,7 +236,7 @@
 
             const apiKey = 'M6kb7mfgOmk841o3ttWGMSaSx9YeeYuX5A1CJlVd';
             const apiHost = 'v1.tennis.api-sports.io';
-            const corsProxy = 'https://api.allorigins.win/raw?url=';
+            const corsProxy = 'https://cors.bridged.cc/';
 
             const toggleFavorite = (playerId) => {
                 setFavorites(prev => 
@@ -252,10 +250,7 @@
                 setLoadingPlayers(true);
                 setPlayerError(null);
                 try {
-                    const fetchPage = (type, page) => {
-                        const url = `https://${apiHost}/rankings/${type}?page=${page}`;
-                        return fetch(`${corsProxy}${encodeURIComponent(url)}`, { headers: { 'x-rapidapi-host': apiHost, 'x-rapidapi-key': apiKey } }).then(res => res.json());
-                    };
+                    const fetchPage = (type, page) => fetch(`${corsProxy}https://${apiHost}/rankings/${type}?page=${page}`, { headers: { 'x-rapidapi-host': apiHost, 'x-rapidapi-key': apiKey } }).then(res => res.json());
                     // Pobieranie 5 stron z każdego rankingu (5*50=250 graczy z ATP, 250 z WTA)
                     const promises = ['wta', 'atp'].flatMap(type => [1, 2, 3, 4, 5].map(page => fetchPage(type, page)));
                     const results = await Promise.all(promises);
@@ -269,19 +264,18 @@
                     setAllPlayers(uniquePlayers);
                 } catch (err) {
                     console.error("Błąd API graczy:", err);
-                    setPlayerError("Nie udało się pobrać rankingu. Spróbuj ponownie później.");
+                    setPlayerError("Nie udało się pobrać rankingu.");
                 } finally {
                     setLoadingPlayers(false);
                 }
-            }, [corsProxy, apiHost, apiKey]);
+            }, []);
 
             const fetchLiveMatches = useCallback(async () => {
                 if (allPlayers.length === 0) return;
                 setLoadingMatches(true);
                 setMatchError(null);
                 try {
-                    const url = `https://${apiHost}/matches/live`;
-                    const response = await fetch(`${corsProxy}${encodeURIComponent(url)}`, { headers: { 'x-rapidapi-host': apiHost, 'x-rapidapi-key': apiKey } });
+                    const response = await fetch(`${corsProxy}https://${apiHost}/matches/live`, { headers: { 'x-rapidapi-host': apiHost, 'x-rapidapi-key': apiKey } });
                     const data = await response.json();
                     if (data.errors && Object.keys(data.errors).length > 0) throw new Error(JSON.stringify(data.errors));
                     const relevantMatches = data.response.filter(match => {
@@ -291,11 +285,11 @@
                     setLiveMatches(relevantMatches);
                 } catch (err) {
                     console.error("Błąd API meczów:", err);
-                    setMatchError("Nie udało się pobrać meczów na żywo. Spróbuj ponownie później.");
+                    setMatchError("Nie udało się pobrać meczów na żywo.");
                 } finally {
                     setLoadingMatches(false);
                 }
-            }, [favorites, allPlayers, corsProxy, apiHost, apiKey]);
+            }, [favorites, allPlayers]);
 
             useEffect(() => { document.documentElement.classList.toggle('dark', isNightShift); }, [isNightShift]);
             useEffect(() => { fetchRankings(); }, [fetchRankings]);
@@ -321,7 +315,7 @@
 
                         {activeTab === 'all' && (
                             <>
-                                <div className="mb-6"><div className="flex space-x-3 overflow-x-auto pb-4 no-scrollbar">{tournaments.map(t => <TournamentPill key={t.id} tournament={t} />)}</div></div>
+                                <div className="mb-6"><div className="flex space-x-4 overflow-x-auto pb-4 no-scrollbar">{tournaments.map(t => <TournamentPill key={t.id} tournament={t} />)}</div></div>
                                 <div className="relative mb-6">
                                     <input type="text" placeholder="Szukaj gracza..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
                                         className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-2 border-transparent focus:border-blue-500 focus:ring-0 rounded-xl shadow-md" />
